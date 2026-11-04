@@ -1,4 +1,4 @@
-/* Copyright (c) 2026 mansoor0x | 1_X @ZeroMan. */
+/* Copyright (c) 2026 mpeygamezonerdc | 1_X @ZeroMan. */
 /* Wait for the offline cache to finish before starting the exploit modules. */
 (function () {
     var cache = window.applicationCache;
