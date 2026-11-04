@@ -1,4 +1,4 @@
-/* Copyright (c) 2026 mansoor0x | 1_X @ZeroMan. Attribution notice; upstream license remains applicable. */
+/* Copyright (c) 2026 mpeygamezonerdc | 1_X @ZeroMan. Attribution notice; upstream license remains applicable. */
 /*
     afterglow -- PlayStation 4 kernel exploit for firmware 14.00
     Port to the raw13 host (WebKit entry), from the Lua original.
