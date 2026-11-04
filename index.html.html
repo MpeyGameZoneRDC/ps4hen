@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr" manifest="cache.appcache">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MPEY — PS4 GoldHEN</title>
+<style>
+:root {
+  --bg:#010813; --surface:#030f28; --border:#0c2460;
+  --accent:#005cff; --gold:#ffc500; --text:#c8d8f5;
+  --dim:#2a3f6f; --ok:#00b854; --fail:#e03535; --warn:#ff8800;
+  --mono:'Courier New',Courier,monospace;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,Arial,sans-serif}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;padding:20px 16px;
+  padding-top:calc(20px + env(safe-area-inset-top,0px));
+  padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+.brand{display:flex;flex-direction:column;align-items:center;margin-bottom:28px}
+.brand-name{font-size:clamp(48px,12vw,76px);font-weight:900;letter-spacing:0.18em;
+  color:#fff;line-height:1;-webkit-text-stroke:1px rgba(0,90,255,0.4);
+  text-shadow:0 0 1px #fff,0 0 30px rgba(0,92,255,0.35)}
+.brand-rule{margin-top:7px;width:100%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0.6}
+.brand-label{margin-top:6px;font-size:10px;letter-spacing:0.35em;color:var(--dim)}
+.card{width:100%;max-width:460px;background:var(--surface);
+  border:1px solid var(--border);border-radius:10px;padding:20px 18px 16px}
+.card-top{display:flex;justify-content:space-between;align-items:center;
+  padding-bottom:14px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.card-heading{font-size:11px;color:var(--dim);letter-spacing:0.15em}
+.fw-detected{display:flex;align-items:center;gap:8px}
+.fw-tag{font-family:var(--mono);font-size:12px;color:var(--accent);
+  background:rgba(0,92,255,0.08);border:1px solid rgba(0,92,255,0.25);
+  border-radius:4px;padding:3px 10px;font-weight:bold}
+.fw-dot{width:8px;height:8px;border-radius:50%;background:var(--dim);flex-shrink:0}
+.fw-dot.ok{background:var(--ok);box-shadow:0 0 6px var(--ok)}
+.fw-dot.warn{background:var(--warn);box-shadow:0 0 6px var(--warn)}
+.fw-support{margin-bottom:14px}
+.fw-support-title{font-size:10px;color:var(--dim);letter-spacing:0.15em;margin-bottom:8px}
+.fw-badges{display:flex;flex-wrap:wrap;gap:6px}
+.fw-badge{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:3px;border:1px solid}
+.fw-badge.supported{color:var(--ok);border-color:rgba(0,184,84,0.3);background:rgba(0,184,84,0.07)}
+.fw-badge.current{color:var(--gold);border-color:rgba(255,197,0,0.4);background:rgba(255,197,0,0.1);font-weight:bold}
+.fw-badge.unsupported{color:var(--dim);border-color:rgba(42,63,111,0.4);background:transparent;opacity:0.5}
+.alert{padding:10px 12px;border-radius:6px;font-size:11px;margin-bottom:14px;display:none;line-height:1.6}
+.alert.ok{background:rgba(0,184,84,0.07);border:1px solid rgba(0,184,84,0.3);color:var(--ok)}
+.alert.warn{background:rgba(255,136,0,0.08);border:1px solid rgba(255,136,0,0.3);color:var(--warn)}
+.fw-select-wrap{margin-bottom:14px;display:none}
+.fw-select-label{font-size:10px;color:var(--dim);letter-spacing:0.1em;margin-bottom:6px}
+.fw-select{width:100%;padding:9px 10px;background:#000b1e;border:1px solid var(--border);
+  border-radius:5px;color:var(--text);font-family:var(--mono);font-size:12px;cursor:pointer}
+.btn-launch{display:block;width:100%;padding:13px 0;margin-bottom:14px;
+  background:var(--accent);color:#fff;font-size:13px;font-weight:700;
+  letter-spacing:0.25em;border:none;border-radius:6px;cursor:pointer;
+  transition:background 0.15s,transform 0.1s;text-transform:uppercase}
+.btn-launch:active{transform:scale(0.98)}
+.btn-launch:hover:not(:disabled){background:#0071ff}
+.btn-launch:disabled{background:#061434;color:var(--dim);cursor:not-allowed;transform:none}
+.btn-launch.done{background:#004d22;color:#00cc66}
+.prog-track{height:3px;background:#020c20;border-radius:2px;margin-bottom:14px;overflow:hidden}
+.prog-fill{height:100%;width:0%;border-radius:2px;transition:width 0.35s ease;
+  background:linear-gradient(90deg,var(--accent),#00cfff)}
+.terminal{background:#000509;border:1px solid #071428;border-radius:5px;
+  padding:10px 12px;font-family:var(--mono);font-size:10.5px;line-height:1.75;
+  height:140px;overflow-y:auto;color:var(--dim);scroll-behavior:smooth}
+.terminal::-webkit-scrollbar{width:3px}
+.terminal::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.t-gold{color:var(--gold)} .t-ok{color:var(--ok)} .t-err{color:var(--fail)}
+.t-inf{color:#2a5baa} .t-warn{color:var(--warn)} .t-dim{color:#131f3a}
+.status{margin-top:12px;font-size:11px;color:var(--dim);text-align:center;
+  letter-spacing:0.08em;min-height:15px}
+footer{margin-top:22px;font-size:9.5px;color:#0d1e3a;letter-spacing:0.2em;text-align:center}
+footer strong{color:#152a56}
+</style>
+</head>
+<body>
+
+<div class="brand">
+  <div class="brand-name">MPEY</div>
+  <div class="brand-rule"></div>
+  <div class="brand-label">PS4 · GoldHEN Loader · Goma, RDC</div>
+</div>
+
+<div class="card">
+  <div class="card-top">
+    <span class="card-heading">Firmware détecté</span>
+    <div class="fw-detected">
+      <div class="fw-dot" id="fwDot"></div>
+      <span class="fw-tag" id="fwTag">Détection…</span>
+    </div>
+  </div>
+
+  <div class="fw-support">
+    <div class="fw-support-title">Firmwares supportés</div>
+    <div class="fw-badges" id="fwBadges"></div>
+  </div>
+
+  <div class="alert ok"  id="alertOk">✓ Firmware compatible détecté. Prêt au lancement.</div>
+  <div class="alert warn" id="alertWarn">⚠️ Firmware non reconnu. Sélectionne manuellement.</div>
+
+  <div class="fw-select-wrap" id="fwSelectWrap">
+    <div class="fw-select-label">Sélectionner le firmware manuellement</div>
+    <select class="fw-select" id="fwSelect" onchange="onFwSelect()">
+      <option value="">-- Choisir --</option>
+      <option value="13.00">13.00</option>
+      <option value="13.50">13.50</option>
+      <option value="13.52">13.52</option>
+      <option value="14.00">14.00</option>
+      <option value="14.02">14.02</option>
+    </select>
+  </div>
+
+  <button class="btn-launch" id="btnLaunch" onclick="run()" disabled>▶ &nbsp;Lancer</button>
+
+  <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+
+  <div class="terminal" id="log">
+    <span class="t-gold">★ MPEY — PS4 GoldHEN Loader</span><br>
+    <span class="t-dim">──────────────────────────────</span><br>
+    <span class="t-inf">Détection du firmware en cours…</span><br>
+  </div>
+  <div class="status" id="statusLine">Initialisation…</div>
+</div>
+
+<footer><strong>MPEY</strong> &nbsp;·&nbsp; Goma, RD Congo &nbsp;·&nbsp; GoldHEN by SiSTRo</footer>
+
+<script>
+var SUPPORTED = ['13.00','13.50','13.52','14.00','14.02'];
+var selectedFW = null;
+var logEl  = document.getElementById('log');
+var progEl = document.getElementById('progFill');
+var statEl = document.getElementById('statusLine');
+var btnEl  = document.getElementById('btnLaunch');
+var dotEl  = document.getElementById('fwDot');
+var tagEl  = document.getElementById('fwTag');
+
+function addLog(t,c){var s=document.createElement('span');if(c)s.className=c;
+  s.textContent=t;logEl.appendChild(s);logEl.appendChild(document.createElement('br'));
+  logEl.scrollTop=logEl.scrollHeight}
+function setP(p){progEl.style.width=p+'%'}
+function setSt(s){statEl.textContent=s}
+function showAlert(id){['alertOk','alertWarn'].forEach(function(i){
+  document.getElementById(i).style.display='none'});
+  if(id)document.getElementById(id).style.display='block'}
+
+function detectFW(){
+  var m=navigator.userAgent.match(/PlayStation\s*4[\/\s](\d+\.\d+)/i);
+  return m?m[1]:null}
+
+function buildBadges(cur){
+  var w=document.getElementById('fwBadges');w.innerHTML='';
+  SUPPORTED.forEach(function(fw){
+    var d=document.createElement('span');
+    d.className='fw-badge '+(fw===cur?'current':'supported');
+    d.textContent=fw;w.appendChild(d)});
+  ['9.00','11.00'].forEach(function(fw){
+    var d=document.createElement('span');
+    d.className='fw-badge unsupported';d.textContent=fw+' ✗';w.appendChild(d)})}
+
+function applyFW(fw){
+  selectedFW=fw;tagEl.textContent='FW '+fw;
+  if(SUPPORTED.indexOf(fw)!==-1){
+    dotEl.className='fw-dot ok';btnEl.disabled=false;
+    btnEl.textContent='▶ \u00a0Lancer — FW '+fw;showAlert('alertOk');
+    addLog('FW '+fw+' — compatible ✓','t-ok');setSt('FW '+fw+' prêt.')
+  }else{
+    dotEl.className='fw-dot warn';btnEl.disabled=false;
+    btnEl.textContent='⚠ Essayer — FW '+fw;showAlert('alertWarn');
+    addLog('FW '+fw+' — tentative possible','t-warn')}
+  buildBadges(fw)}
+
+function onFwSelect(){
+  var v=document.getElementById('fwSelect').value;
+  if(v){addLog('FW sélectionné : '+v,'t-inf');applyFW(v)}}
+
+window.onload=function(){
+  var fw=detectFW();
+  if(fw){
+    addLog('User-Agent PS4 détecté','t-inf');
+    addLog('Version firmware : '+fw,'t-ok');
+    document.getElementById('fwSelectWrap').style.display='none';
+    applyFW(fw)
+  }else{
+    tagEl.textContent='Non détecté';dotEl.className='fw-dot warn';
+    showAlert('alertWarn');
+    document.getElementById('fwSelectWrap').style.display='block';
+    btnEl.disabled=true;buildBadges(null);
+    addLog('Sélectionne le firmware manuellement','t-inf');
+    setSt('Sélectionne ton firmware.')}};
+
+function run(){
+  btnEl.disabled=true;
+  var fw=selectedFW;
+  addLog('','');
+  addLog('★ MPEY · FW '+fw+' · Démarrage','t-gold');
+  addLog('Chargement de l\'exploit réel…','t-inf');
+  setP(30);setSt('Lancement de l\'exploit…');
+
+  // ═══════════════════════════════════════════════════
+  //  LANCEMENT DU VRAI EXPLOIT après 1.5 secondes
+  //  → redirige vers exploit.html (le vrai exploit)
+  // ═══════════════════════════════════════════════════
+  setTimeout(function(){
+    addLog('Redirection vers exploit…','t-inf');
+    setP(70);
+    setTimeout(function(){
+      setP(100);
+      addLog('★ MPEY — Transfert vers GoldHEN…','t-gold');
+      setSt('Chargement GoldHEN…');
+      // Redirection vers le vrai exploit
+      window.location.href='exploit.html';
+    },800);
+  },1500);
+}
+function wait(ms,fn){setTimeout(fn,ms)}
+</script>
+
+</body>
+</html>
