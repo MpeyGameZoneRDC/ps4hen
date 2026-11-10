@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fr" manifest="cache.appcache">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MPEY — PS4 GoldHEN</title>
+<style>
+:root{--bg:#010813;--surface:#030f28;--border:#0c2460;--accent:#005cff;
+  --gold:#ffc500;--text:#c8d8f5;--dim:#2a3f6f;--ok:#00b854;--fail:#e03535;
+  --warn:#ff8800;--mono:'Courier New',Courier,monospace}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,Arial,sans-serif}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;padding:20px 16px;
+  padding-top:calc(20px + env(safe-area-inset-top,0px));
+  padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+/* LOGO */
+.brand{display:flex;flex-direction:column;align-items:center;margin-bottom:28px}
+.brand-name{font-size:clamp(48px,12vw,76px);font-weight:900;letter-spacing:0.18em;
+  color:#fff;line-height:1;-webkit-text-stroke:1px rgba(0,90,255,0.4);
+  text-shadow:0 0 1px #fff,0 0 30px rgba(0,92,255,0.35)}
+.brand-rule{margin-top:7px;width:100%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.6}
+.brand-label{margin-top:6px;font-size:10px;letter-spacing:.35em;color:var(--dim)}
+/* CARTE */
+.card{width:100%;max-width:460px;background:var(--surface);
+  border:1px solid var(--border);border-radius:10px;padding:20px 18px 16px}
+.card-top{display:flex;justify-content:space-between;align-items:center;
+  padding-bottom:14px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.card-heading{font-size:11px;color:var(--dim);letter-spacing:.15em}
+/* FW DÉTECTÉ */
+.fw-detected{display:flex;align-items:center;gap:8px}
+.fw-tag{font-family:var(--mono);font-size:12px;color:var(--accent);
+  background:rgba(0,92,255,.08);border:1px solid rgba(0,92,255,.25);
+  border-radius:4px;padding:3px 10px;font-weight:bold}
+.fw-dot{width:8px;height:8px;border-radius:50%;background:var(--dim);flex-shrink:0;
+  transition:background .3s,box-shadow .3s}
+.fw-dot.ok{background:var(--ok);box-shadow:0 0 6px var(--ok)}
+.fw-dot.warn{background:var(--warn);box-shadow:0 0 6px var(--warn)}
+.fw-dot.loading{background:var(--accent);animation:blink 1s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+/* BADGES FW */
+.fw-support{margin-bottom:14px}
+.fw-support-title{font-size:10px;color:var(--dim);letter-spacing:.15em;margin-bottom:8px}
+.fw-badges{display:flex;flex-wrap:wrap;gap:6px}
+.fw-badge{font-family:var(--mono);font-size:10px;padding:3px 8px;
+  border-radius:3px;border:1px solid;transition:all .2s}
+.fw-badge.supported{color:var(--ok);border-color:rgba(0,184,84,.3);background:rgba(0,184,84,.07)}
+.fw-badge.current{color:var(--gold);border-color:rgba(255,197,0,.4);
+  background:rgba(255,197,0,.1);font-weight:bold;transform:scale(1.05)}
+.fw-badge.unsupported{color:var(--dim);border-color:rgba(42,63,111,.4);opacity:.5}
+/* ALERTE */
+.alert{padding:9px 12px;border-radius:6px;font-size:11px;
+  margin-bottom:14px;display:none;line-height:1.6}
+.alert.ok{background:rgba(0,184,84,.07);border:1px solid rgba(0,184,84,.3);color:var(--ok)}
+.alert.warn{background:rgba(255,136,0,.08);border:1px solid rgba(255,136,0,.3);color:var(--warn)}
+.alert.info{background:rgba(0,92,255,.07);border:1px solid rgba(0,92,255,.25);color:#5588ff}
+/* BOUTON */
+.btn-launch{display:block;width:100%;padding:14px 0;margin-bottom:14px;
+  background:var(--accent);color:#fff;font-size:13px;font-weight:700;
+  letter-spacing:.25em;border:none;border-radius:6px;cursor:pointer;
+  transition:background .15s,transform .1s;text-transform:uppercase}
+.btn-launch:active{transform:scale(.98)}
+.btn-launch:hover:not(:disabled){background:#0071ff}
+.btn-launch:disabled{background:#061434;color:var(--dim);cursor:not-allowed;transform:none}
+/* PROGRESS */
+.prog-track{height:3px;background:#020c20;border-radius:2px;
+  margin-bottom:14px;overflow:hidden}
+.prog-fill{height:100%;width:0%;border-radius:2px;
+  background:linear-gradient(90deg,var(--accent),#00cfff);
+  transition:width .4s ease}
+/* STATUS — mis à jour par launch.js */
+#status{font-size:11px;color:var(--dim);text-align:center;
+  letter-spacing:.08em;min-height:16px;font-family:var(--mono)}
+/* FOOTER */
+footer{margin-top:22px;font-size:9.5px;color:#0d1e3a;
+  letter-spacing:.2em;text-align:center}
+footer strong{color:#152a56}
+</style>
+
+<script>
+var SUPPORTED = ['13.00','13.50','13.52','14.00','14.02'];
+var detectedFW = null;
+
+function detectFW(){
+  var m = navigator.userAgent.match(/PlayStation\s*4[\/\s](\d+\.\d+)/i);
+  return m ? m[1] : null;
+}
+
+function buildBadges(cur){
+  var w = document.getElementById('fwBadges');
+  if(!w) return;
+  w.innerHTML = '';
+  SUPPORTED.forEach(function(fw){
+    var d = document.createElement('span');
+    d.className = 'fw-badge '+(fw===cur?'current':'supported');
+    d.textContent = fw;
+    w.appendChild(d);
+  });
+  ['9.00','11.00'].forEach(function(fw){
+    var d = document.createElement('span');
+    d.className = 'fw-badge unsupported';
+    d.textContent = fw+' ✗';
+    w.appendChild(d);
+  });
+}
+
+function showAlert(id){
+  ['alertOk','alertWarn','alertInfo'].forEach(function(i){
+    var el = document.getElementById(i);
+    if(el) el.style.display = 'none';
+  });
+  if(id){ var el = document.getElementById(id); if(el) el.style.display = 'block'; }
+}
+
+function setProgress(p){
+  var el = document.getElementById('progFill');
+  if(el) el.style.width = p+'%';
+}
+
+// ═══════════════════════════════════════════════════════
+//  CALLBACK appelé par launch.js quand le cache est prêt
+// ═══════════════════════════════════════════════════════
+window.onCacheReady = function(){
+  setProgress(100);
+  document.getElementById('fwDot').className = 'fw-dot ok';
+  var btn = document.getElementById('btnLaunch');
+  btn.disabled = false;
+  btn.textContent = '▶ \u00a0Lancer';
+  if(SUPPORTED.indexOf(detectedFW) !== -1){
+    showAlert('alertOk');
+  } else {
+    showAlert('alertWarn');
+  }
+};
+
+// Bouton Lancer → redirige vers exploit.html avec bon referrer
+function lancerExploit(){
+  var btn = document.getElementById('btnLaunch');
+  btn.disabled = true;
+  btn.textContent = 'Chargement…';
+  document.getElementById('status').textContent = 'Lancement de GoldHEN…';
+  setProgress(80);
+  setTimeout(function(){
+    location.replace('exploit.html?log=1&afterglow=run&mode=goldhen');
+  }, 600);
+}
+
+window.onload = function(){
+  detectedFW = detectFW();
+  var tagEl = document.getElementById('fwTag');
+  var dotEl = document.getElementById('fwDot');
+
+  if(detectedFW){
+    tagEl.textContent = 'FW '+detectedFW;
+    dotEl.className = 'fw-dot loading';
+    buildBadges(detectedFW);
+    if(SUPPORTED.indexOf(detectedFW) !== -1){
+      showAlert('alertInfo');
+    } else {
+      showAlert('alertWarn');
+    }
+  } else {
+    tagEl.textContent = 'Détection…';
+    dotEl.className = 'fw-dot loading';
+    buildBadges(null);
+    showAlert('alertInfo');
+  }
+};
+</script>
+</head>
+<body>
+
+<div class="brand">
+  <div class="brand-name">MPEY</div>
+  <div class="brand-rule"></div>
+  <div class="brand-label">PS4 · GoldHEN Loader · Goma, RDC</div>
+</div>
+
+<div class="card">
+  <div class="card-top">
+    <span class="card-heading">Firmware détecté</span>
+    <div class="fw-detected">
+      <div class="fw-dot loading" id="fwDot"></div>
+      <span class="fw-tag" id="fwTag">Détection…</span>
+    </div>
+  </div>
+
+  <div class="fw-support">
+    <div class="fw-support-title">Firmwares supportés</div>
+    <div class="fw-badges" id="fwBadges"></div>
+  </div>
+
+  <div class="alert ok"  id="alertOk">✓ Firmware compatible — Prêt au lancement !</div>
+  <div class="alert warn" id="alertWarn">⚠ Firmware non standard — tentative possible</div>
+  <div class="alert info" id="alertInfo">⏳ Chargement du cache en cours…</div>
+
+  <button class="btn-launch" id="btnLaunch" onclick="lancerExploit()" disabled>
+    ⏳ &nbsp;Cache en cours…
+  </button>
+
+  <div class="prog-track">
+    <div class="prog-fill" id="progFill"></div>
+  </div>
+
+  <!-- launch.js met à jour cet élément -->
+  <div id="status">Préparation du cache offline…</div>
+</div>
+
+<footer>
+  <strong>MPEY</strong> &nbsp;·&nbsp; Goma, RD Congo &nbsp;·&nbsp; GoldHEN by SiSTRo
+</footer>
+
+<!-- CRITIQUE : gère le cache AppCache -->
+<script src="launch.js"></script>
+
+</body>
+</html>
